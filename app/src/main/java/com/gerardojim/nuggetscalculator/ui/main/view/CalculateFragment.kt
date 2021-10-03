@@ -1,25 +1,30 @@
 package com.gerardojim.nuggetscalculator.ui.main.view
 
-import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.gerardojim.nuggetscalculator.databinding.MainFragmentBinding
+import com.gerardojim.nuggetscalculator.R
+import com.gerardojim.nuggetscalculator.databinding.CalculateFragmentBinding
 import com.gerardojim.nuggetscalculator.ui.main.intent.MainIntent
-import com.gerardojim.nuggetscalculator.ui.main.viewmodel.MainViewModel
+import com.gerardojim.nuggetscalculator.ui.main.viewUtil.checkedChanges
+import com.gerardojim.nuggetscalculator.ui.main.viewUtil.selectionChanges
+import com.gerardojim.nuggetscalculator.ui.main.viewUtil.textChanges
+import com.gerardojim.nuggetscalculator.ui.main.viewmodel.CalculateViewModel
 import com.gerardojim.nuggetscalculator.ui.main.viewmodel.MainViewModelFactory
 import com.gerardojim.nuggetscalculator.ui.main.viewstate.MainState
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class CalculateFragment : Fragment() {
-
-    private lateinit var viewModel: MainViewModel
-    private lateinit var binding: MainFragmentBinding
+    private lateinit var viewModel: CalculateViewModel
+    private lateinit var binding: CalculateFragmentBinding
 
     companion object {
         fun newInstance() = CalculateFragment()
@@ -27,13 +32,14 @@ class CalculateFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProvider(this, MainViewModelFactory()).get(MainViewModel::class.java)
+        viewModel =
+            ViewModelProvider(this, MainViewModelFactory()).get(CalculateViewModel::class.java)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View = MainFragmentBinding.inflate(inflater, container, false).let {
+    ): View = CalculateFragmentBinding.inflate(inflater, container, false).let {
         binding = it
         binding.root
     }
@@ -45,18 +51,33 @@ class CalculateFragment : Fragment() {
         observeViewModel()
     }
 
+    @ExperimentalCoroutinesApi
     private fun setupClicks() {
-        binding.calculateButton.setOnClickListener {
-            lifecycleScope.launch {
-                viewModel.userIntent.send(
-                    MainIntent.Calculate(
-                        selectedFoodPosition = binding.foodPicker.selectedItemPosition,
-                        dailyCaloricTarget = binding.caloriesEditText.text.toString().toInt(),
-                        hasDryFood = binding.dryfoodSwitch.isChecked,
-                        hasGreenie = binding.greenieSwitch.isChecked,
-                    )
+
+        // TODO these interactions with the view result in a testable Intent but as is testing the
+        //  an interaction with only one of these views is not possible.
+        // Considering other approaches
+        lifecycleScope.launch {
+            val inputCaloriesSource = binding.caloriesEditText.textChanges()
+                .filterNot { it.isEmpty() }.map { it.toString().toInt() }
+            val selectedFoodSource = binding.foodDropdown.selectionChanges()
+            val hasGreenieSource = binding.greenieSwitch.checkedChanges()
+            val hasDryFoodSource = binding.dryfoodSwitch.checkedChanges()
+
+            combine(
+                inputCaloriesSource,
+                selectedFoodSource,
+                hasGreenieSource,
+                hasDryFoodSource,
+            ) { calories, food, hasGreenie, hasDryFood ->
+                Log.d(null, "jimenez - test - $calories")
+                MainIntent.Calculate(
+                    selectedFoodPosition = food,
+                    dailyCaloricTarget = calories,
+                    hasDryFood = hasDryFood,
+                    hasGreenie = hasGreenie,
                 )
-            }
+            }.collect { viewModel.userIntent.send(it) }
         }
     }
 
@@ -70,12 +91,8 @@ class CalculateFragment : Fragment() {
                         // TEMP
                     }
                     is MainState.Results -> {
-                        binding.resultMessage.apply {
-                            text = """Pixel can have ${it.mealServing.wetFoodServing} grams of 
-                                |wet food and ${it.mealServing.dryFoodServing} of dry food."""
-                                .trimMargin()
-                            visibility = View.VISIBLE
-                        }
+                        binding.wetFoodTotal.text = it.mealServing.wetFoodServing.toString()
+                        binding.dryFoodTotal.text = it.mealServing.dryFoodServing.toString()
                     }
                 }
             }
@@ -83,16 +100,12 @@ class CalculateFragment : Fragment() {
     }
 
     private fun setupFoodPicker(it: MainState.Init) {
-        binding.foodPicker.apply {
-            adapter = ArrayAdapter(
+        binding.foodDropdown.apply {
+            val adapter = ArrayAdapter(
                 requireContext(),
-                android.R.layout.simple_spinner_item,
+                R.layout.support_simple_spinner_dropdown_item,
                 it.foodTypes.map { foodType -> foodType.key })
-            onItemSelectedListener = SimpleOnItemSelectedListener { position ->
-                lifecycleScope.launch {
-                    viewModel.userIntent.send(MainIntent.SelectFood(position))
-                }
-            }
+            setAdapter(adapter)
         }
     }
 }

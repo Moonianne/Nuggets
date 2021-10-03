@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val calculator: DoggyMealCalculator) : ViewModel() {
+class CalculateViewModel(private val calculator: DoggyMealCalculator) : ViewModel() {
     val userIntent = Channel<MainIntent>(Channel.UNLIMITED)
     private val viewState = MutableStateFlow<MainState>(MainState.Init())
     val state: StateFlow<MainState> get() = viewState
@@ -27,11 +27,6 @@ class MainViewModel(private val calculator: DoggyMealCalculator) : ViewModel() {
             userIntent.consumeAsFlow().collect { intent ->
                 when (intent) {
                     is MainIntent.Calculate -> calculateMealServingSize(intent)
-                    is MainIntent.SelectFood -> viewModelScope.launch {
-                        viewState.value = MainState.Working(
-                            FoodType.fromPosition(intent.position)
-                        )
-                    }
                 }
             }
         }

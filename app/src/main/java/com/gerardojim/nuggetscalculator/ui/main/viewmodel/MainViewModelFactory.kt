@@ -6,8 +6,8 @@ import com.gerardojim.nuggetscalculator.ui.main.domain.DoggyMealCalculator
 
 class MainViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            return MainViewModel(DoggyMealCalculator()) as T
+        if (modelClass.isAssignableFrom(CalculateViewModel::class.java)) {
+            return CalculateViewModel(DoggyMealCalculator()) as T
         }
         throw IllegalArgumentException("Unknown class name")
     }

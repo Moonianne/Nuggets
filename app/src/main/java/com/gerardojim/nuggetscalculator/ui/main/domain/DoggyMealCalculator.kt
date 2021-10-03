@@ -13,9 +13,9 @@ class DoggyMealCalculator {
     fun getMealServing(
         wetFood: FoodType,
         dailyCaloricTarget: Int,
+        hasDryFood: Boolean,
+        hasGreenie: Boolean,
         offset: Double = 0.0,
-        hasDryFood: Boolean = true,
-        hasGreenie: Boolean = true,
     ): MealServing {
 
         fun getFoodServingInGrams(kcalPerServing: Double, foodType: FoodType): Double =
