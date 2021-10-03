@@ -16,13 +16,13 @@ import com.gerardojim.nuggetscalculator.ui.main.viewstate.MainState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class MainFragment : Fragment() {
+class CalculateFragment : Fragment() {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: MainFragmentBinding
 
     companion object {
-        fun newInstance() = MainFragment()
+        fun newInstance() = CalculateFragment()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
