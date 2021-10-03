@@ -2,7 +2,7 @@ package com.gerardojim.nuggetscalculator.ui.main.domain
 
 import kotlin.math.floor
 
-open class DoggyMealCalculator {
+class DoggyMealCalculator {
 
     companion object {
         private const val KCAL_PER_GREENIE = 26
