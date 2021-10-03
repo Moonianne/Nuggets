@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="foods_array">
+        <item>Chicken</item>
+        <item>Turkey</item>
+        <item>Beef</item>
+        <item>Venison</item>
+        <item>Lamb</item>
+        <item>Fish</item>
+    </string-array>
+</resources>
