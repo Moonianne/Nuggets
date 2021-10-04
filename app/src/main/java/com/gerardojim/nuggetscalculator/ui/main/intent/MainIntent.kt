@@ -8,6 +8,4 @@ sealed class MainIntent {
         val hasDryFood: Boolean,
         val hasGreenie: Boolean,
     ) : MainIntent()
-
-    data class SelectFood(val position: Int) : MainIntent()
 }
