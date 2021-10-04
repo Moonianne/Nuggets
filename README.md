@@ -8,4 +8,4 @@ This project is both a way to give my partner and I an easy way to determine how
 
 
 
-For Info to Come! Thanks for stopping by :)
+More Info to Come! Thanks for stopping by :)
