@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.CompoundButton
 import android.widget.EditText
+import com.gerardojim.nuggetscalculator.ui.main.view.SimpleOnItemSelectedListener
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -48,7 +49,7 @@ fun CompoundButton.checkedChanges(): Flow<Boolean> = callbackFlow {
 
 @ExperimentalCoroutinesApi
 fun AutoCompleteTextView.selectionChanges(): Flow<Int> = callbackFlow {
-    setOnItemClickListener { adapterView, view, position, id ->
+    onItemSelectedListener = SimpleOnItemSelectedListener { position ->
         this.trySend(position)
     }
     awaitClose { onItemClickListener = null }

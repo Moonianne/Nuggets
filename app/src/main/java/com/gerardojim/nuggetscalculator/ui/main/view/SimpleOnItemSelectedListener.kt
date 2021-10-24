@@ -2,10 +2,9 @@ package com.gerardojim.nuggetscalculator.ui.main.view
 
 import android.view.View
 import android.widget.AdapterView
-import kotlinx.coroutines.Job
 
 class SimpleOnItemSelectedListener(
-    val listener: (Int) -> Job
+    val listener: (Int) -> Unit
 ) : AdapterView.OnItemSelectedListener {
 
     override fun onItemSelected(
