@@ -19,9 +19,13 @@ import com.gerardojim.nuggetscalculator.ui.main.viewmodel.CalculateViewModel
 import com.gerardojim.nuggetscalculator.ui.main.viewmodel.MainViewModelFactory
 import com.gerardojim.nuggetscalculator.ui.main.viewstate.MainState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+@ExperimentalCoroutinesApi
 class CalculateFragment : Fragment() {
     private lateinit var viewModel: CalculateViewModel
     private lateinit var binding: CalculateFragmentBinding
@@ -37,7 +41,8 @@ class CalculateFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = CalculateFragmentBinding.inflate(inflater, container, false).let {
         binding = it
@@ -46,17 +51,17 @@ class CalculateFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupClicks()
         observeViewModel()
     }
 
-    @ExperimentalCoroutinesApi
     private fun setupClicks() {
 
-        // TODO these interactions with the view result in a testable Intent but as is testing the
-        //  an interaction with only one of these views is not possible.
-        // Considering other approaches
+         /*
+         TODO these interactions with the view result in a testable Intent but as is testing the
+          an interaction with only one of these views is not possible.
+          Considering other approaches
+         */
         lifecycleScope.launch {
             val inputCaloriesSource = binding.caloriesEditText.textChanges()
                 .filterNot { it.isEmpty() }.map { it.toString().toInt() }
@@ -104,7 +109,8 @@ class CalculateFragment : Fragment() {
             val adapter = ArrayAdapter(
                 requireContext(),
                 R.layout.support_simple_spinner_dropdown_item,
-                it.foodTypes.map { foodType -> foodType.key })
+                it.foodTypes.map { foodType -> foodType.key }
+            )
             setAdapter(adapter)
         }
     }

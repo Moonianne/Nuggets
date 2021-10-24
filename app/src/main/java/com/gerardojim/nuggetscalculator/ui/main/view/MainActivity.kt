@@ -1,7 +1,7 @@
 package com.gerardojim.nuggetscalculator.ui.main.view
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import com.gerardojim.nuggetscalculator.R
 
 class MainActivity : AppCompatActivity() {

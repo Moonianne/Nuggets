@@ -2,13 +2,11 @@ package com.gerardojim.nuggetscalculator.ui.main.domain
 
 import kotlin.math.floor
 
-class DoggyMealCalculator {
+private const val KCAL_PER_GREENIE = 26
+private const val FULL_PORTION = 2
+private const val HALF_PORTION = 4
 
-    companion object {
-        private const val KCAL_PER_GREENIE = 26
-        private const val FULL_PORTION = 2
-        private const val HALF_PORTION = 4
-    }
+class DoggyMealCalculator {
 
     fun getMealServing(
         wetFood: FoodType,
