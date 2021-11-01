@@ -5,7 +5,7 @@ plugins {
 
 android {
     compileSdkVersion 31
-    buildToolsVersion "30.0.3"
+    buildToolsVersion '31.0.0'
 
     defaultConfig {
         applicationId "today.onedrop.nuggetscalculator"
@@ -30,9 +30,8 @@ android {
     kotlinOptions {
         jvmTarget = '11'
     }
-
     buildFeatures {
-        viewBinding = true
+        viewBinding true
     }
 }
 
@@ -48,11 +47,11 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.0'
 
     //Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2-native-mt'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2-native-mt'
 
     //Arrow
-    implementation("io.arrow-kt:arrow-core:1.0.0")
+    implementation('io.arrow-kt:arrow-core:1.0.1')
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
