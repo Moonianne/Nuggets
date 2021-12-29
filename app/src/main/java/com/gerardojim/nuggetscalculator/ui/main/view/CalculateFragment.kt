@@ -1,5 +1,6 @@
 package com.gerardojim.nuggetscalculator.ui.main.view
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,7 +12,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.gerardojim.nuggetscalculator.R
 import com.gerardojim.nuggetscalculator.databinding.CalculateFragmentBinding
-import com.gerardojim.nuggetscalculator.ui.main.intent.MainIntent
+import com.gerardojim.nuggetscalculator.ui.main.AndroidPreferences
+import com.gerardojim.nuggetscalculator.ui.main.domain.FoodType
+import com.gerardojim.nuggetscalculator.ui.main.exhaustive
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.checkedChanges
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.selectionChanges
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.textChanges
@@ -19,10 +22,7 @@ import com.gerardojim.nuggetscalculator.ui.main.viewmodel.CalculateViewModel
 import com.gerardojim.nuggetscalculator.ui.main.viewmodel.MainViewModelFactory
 import com.gerardojim.nuggetscalculator.ui.main.viewstate.MainState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNot
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 @ExperimentalCoroutinesApi
@@ -36,8 +36,9 @@ class CalculateFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val prefs = AndroidPreferences(requireActivity().getPreferences(Context.MODE_PRIVATE))
         viewModel =
-            ViewModelProvider(this, MainViewModelFactory()).get(CalculateViewModel::class.java)
+            ViewModelProvider(this, MainViewModelFactory(prefs))[CalculateViewModel::class.java]
     }
 
     override fun onCreateView(
@@ -51,11 +52,10 @@ class CalculateFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupClicks()
         observeViewModel()
     }
 
-    private fun setupClicks() {
+    private fun setupClicks(state: MainState) {
 
          /*
          TODO these interactions with the view result in a testable Intent but as is testing the
@@ -63,26 +63,23 @@ class CalculateFragment : Fragment() {
           Considering other approaches
          */
         lifecycleScope.launch {
-            val inputCaloriesSource = binding.caloriesEditText.textChanges()
-                .filterNot { it.isEmpty() }.map { it.toString().toInt() }
-            val selectedFoodSource = binding.foodDropdown.selectionChanges()
-            val hasGreenieSource = binding.greenieSwitch.checkedChanges()
-            val hasDryFoodSource = binding.dryfoodSwitch.checkedChanges()
+            binding.caloriesEditText.textChanges()
+                .filterNot { it.isEmpty() }.map { it.toString().toInt() }.also {
+                    state.onCaloricTargetInput.map { send -> it.collect(send) }
+                }
+            binding.foodDropdown.selectionChanges().also {
+                state.onSelectedFoodTypeChanged.map { send -> it.map { FoodType.fromPosition(it) }.collect(send) }
+            }
+            binding.greenieSwitch.checkedChanges().also {
+                state.onWithGreenieSwitched.map { send -> it.collect(send) }
+            }
 
-            combine(
-                inputCaloriesSource,
-                selectedFoodSource,
-                hasGreenieSource,
-                hasDryFoodSource,
-            ) { calories, food, hasGreenie, hasDryFood ->
-                Log.d(null, "jimenez - test - $calories")
-                MainIntent.Calculate(
-                    selectedFoodPosition = food,
-                    dailyCaloricTarget = calories,
-                    hasDryFood = hasDryFood,
-                    hasGreenie = hasGreenie,
-                )
-            }.collect { viewModel.userIntent.send(it) }
+            binding.dryfoodSwitch.checkedChanges().collect { isChecked ->
+                Log.d(null, "jimenez - test - dryFoodSwitch = $isChecked")
+                state.onWithDryFoodSwitched.map { listener ->
+                    listener.invoke(isChecked)
+                }
+            }
         }
     }
 
@@ -91,20 +88,22 @@ class CalculateFragment : Fragment() {
             viewModel.state.collect {
                 when (it) {
                     is MainState.Error -> throw it.throwable
-                    is MainState.Init -> setupFoodPicker(it)
-                    is MainState.Working -> {
+                    is MainState.Loading -> setupFoodPicker(it)
+                    is MainState.NeedInput -> {
                         // TEMP
                     }
-                    is MainState.Results -> {
+                    is MainState.Success -> {
                         binding.wetFoodTotal.text = it.mealServing.wetFoodServing.toString()
                         binding.dryFoodTotal.text = it.mealServing.dryFoodServing.toString()
                     }
-                }
+                }.exhaustive
+                setupFoodPicker(it)
+                setupClicks(it)
             }
         }
     }
 
-    private fun setupFoodPicker(it: MainState.Init) {
+    private fun setupFoodPicker(it: MainState) {
         binding.foodDropdown.apply {
             val adapter = ArrayAdapter(
                 requireContext(),

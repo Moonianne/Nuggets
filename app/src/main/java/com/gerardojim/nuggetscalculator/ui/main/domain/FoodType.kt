@@ -15,5 +15,9 @@ enum class FoodType(
 
     companion object {
         fun fromPosition(position: Int): FoodType = values().first { position == it.position }
+
+        fun fromKey(foodTypeString: String): FoodType {
+            return values().first { it.key == foodTypeString }
+        }
     }
 }
