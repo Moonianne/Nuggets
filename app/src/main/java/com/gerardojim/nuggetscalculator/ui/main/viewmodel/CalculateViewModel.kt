@@ -30,7 +30,7 @@ class CalculateViewModel(
     private val appPrefs: Preferences,
 ) : ViewModel() {
 
-    val userIntent = Channel<CalculateIntent>(Channel.UNLIMITED)
+    private val userIntent = Channel<CalculateIntent>(Channel.UNLIMITED)
     private val viewState = MutableStateFlow<MainState>(MainState.Loading)
     val state: StateFlow<MainState> get() = viewState
 

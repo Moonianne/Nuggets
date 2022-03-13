@@ -24,7 +24,7 @@ import com.gerardojim.nuggetscalculator.ui.main.viewmodel.CalculateViewModel
 import com.gerardojim.nuggetscalculator.ui.main.viewmodel.MainViewModelFactory
 import com.gerardojim.nuggetscalculator.ui.main.viewstate.MainState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.* // ktlint-disable no-wildcard-imports
 import kotlinx.coroutines.launch
 
 @ExperimentalCoroutinesApi
@@ -58,8 +58,7 @@ class CalculateFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        fun setupUserInteraction(mainState: MainState) {
-            Log.d(null, "jimenez - setupClicks::State = $mainState")
+        suspend fun setupUserInteraction(mainState: MainState) {
             /*
          TODO these interactions with the view result in a testable Intent but as is testing the
           an interaction with only one of these views is not possible.
@@ -68,7 +67,16 @@ class CalculateFragment : Fragment() {
             lifecycleScope.launch {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     launch {
+                        binding.foodDropdown.selectionChanges().collect { position ->
+                            Log.d(null, "jimenez - test - foodDropdown:: $position")
+                            mainState.onSelectedFoodTypeChanged.map {
+                                it(FoodType.fromPosition(position))
+                            }
+                        }
+                    }
+                    launch {
                         binding.dryfoodSwitch.checkedChanges().collect { isChecked ->
+                            Log.d(null, "jimenez - test - dryFoodSwitch:: $isChecked")
                             mainState.onWithDryFoodSwitched.map { it(isChecked) }
                         }
                     }
@@ -76,22 +84,13 @@ class CalculateFragment : Fragment() {
                         binding.caloriesEditText.textChanges()
                             .filterNot { it.isEmpty() }.map { it.toString().toInt() }
                             .collect { calorieTarget ->
+                                Log.d(null, "jimenez - test - caloriesEditText:: $calorieTarget")
                                 mainState.onCaloricTargetInput.map { it(calorieTarget) }
                             }
                     }
                     launch {
-                        binding.foodDropdown.selectionChanges().collect { position ->
-                            mainState.onSelectedFoodTypeChanged.map {
-                                it(
-                                    FoodType.fromPosition(
-                                        position
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    launch {
                         binding.greenieSwitch.checkedChanges().collect { isChecked ->
+                            Log.d(null, "jimenez - test - greenieSwitch:: $isChecked")
                             mainState.onWithGreenieSwitched.map { it(isChecked) }
                         }
                     }
