@@ -6,7 +6,7 @@ import arrow.core.some
 import com.gerardojim.nuggetscalculator.ui.main.domain.FoodType
 import com.gerardojim.nuggetscalculator.ui.main.domain.MealServing
 
-sealed class MainState() {
+sealed class MainState {
     val foodTypes: List<FoodType> = FoodType.values().sortedBy { it.position }
     abstract val selectedFood: Option<FoodType>
     abstract val withGreenie: Boolean

@@ -1,6 +1,5 @@
 package com.gerardojim.nuggetscalculator.ui.main.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.some
@@ -8,11 +7,22 @@ import arrow.core.toOption
 import com.gerardojim.nuggetscalculator.ui.main.Preferences
 import com.gerardojim.nuggetscalculator.ui.main.domain.DoggyMealCalculator
 import com.gerardojim.nuggetscalculator.ui.main.domain.FoodType
+import com.gerardojim.nuggetscalculator.ui.main.exhaustive
 import com.gerardojim.nuggetscalculator.ui.main.get
 import com.gerardojim.nuggetscalculator.ui.main.intent.CalculateIntent
 import com.gerardojim.nuggetscalculator.ui.main.viewstate.MainState
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
 class CalculateViewModel(
@@ -63,20 +73,21 @@ class CalculateViewModel(
     }
 
     private fun handleIntent() {
+        val intentSharedSource: SharedFlow<CalculateIntent> =
+            userIntent.consumeAsFlow().shareIn(viewModelScope, SharingStarted.Lazily)
         viewModelScope.launch {
-            val intentSharedSource: SharedFlow<CalculateIntent> =
-                userIntent.consumeAsFlow().shareIn(viewModelScope, SharingStarted.Lazily)
-            intentSharedSource.collect { intent ->
-
-                Log.d(null, "jimenez - handleIntent() = $intent")
-                when (intent) {
-                    is CalculateIntent.Calculate -> calculateMealServingSize(intent)
-                    is CalculateIntent.DailyCaloricTarget -> appPrefs.setCaloricTarget(intent)
-                    is CalculateIntent.FoodSelected -> appPrefs.setFoodType(intent.selectedFood)
-                    is CalculateIntent.HasDryFood -> appPrefs.setCombinedWithDryFood(intent)
-                    is CalculateIntent.HasGreenie -> appPrefs.setWithGreenie(intent)
+            launch {
+                intentSharedSource.collect { intent: CalculateIntent ->
+                    when (intent) {
+                        is CalculateIntent.Calculate -> calculateMealServingSize(intent)
+                        is CalculateIntent.DailyCaloricTarget -> appPrefs.setCaloricTarget(intent)
+                        is CalculateIntent.FoodSelected -> appPrefs.setFoodType(intent.selectedFood)
+                        is CalculateIntent.HasDryFood -> appPrefs.setCombinedWithDryFood(intent)
+                        is CalculateIntent.HasGreenie -> appPrefs.setWithGreenie(intent)
+                    }.exhaustive
                 }
             }
+
             val inputCaloriesSource: Flow<CalculateIntent.DailyCaloricTarget> =
                 intentSharedSource.filter { it is CalculateIntent.DailyCaloricTarget }
                     .map { it as CalculateIntent.DailyCaloricTarget }
@@ -90,19 +101,21 @@ class CalculateViewModel(
                 intentSharedSource.filter { it is CalculateIntent.HasDryFood }
                     .map { it as CalculateIntent.HasDryFood }
 
-            combine(
-                inputCaloriesSource,
-                selectedFoodSource,
-                hasGreenieSource,
-                hasDryFoodSource,
-            ) { calories, food, hasGreenie, hasDryFood ->
-                CalculateIntent.Calculate(
-                    selectedFood = food.selectedFood,
-                    dailyCaloricTarget = calories.value,
-                    hasDryFood = hasDryFood.value,
-                    hasGreenie = hasGreenie.value,
-                )
-            }.collect { calculateMealServingSize(it) }
+            launch {
+                combine(
+                    inputCaloriesSource,
+                    selectedFoodSource,
+                    hasGreenieSource,
+                    hasDryFoodSource,
+                ) { calories, food, hasGreenie, hasDryFood ->
+                    CalculateIntent.Calculate(
+                        selectedFood = food.selectedFood,
+                        dailyCaloricTarget = calories.value,
+                        hasDryFood = hasDryFood.value,
+                        hasGreenie = hasGreenie.value,
+                    )
+                }.collect { calculateMealServingSize(it) }
+            }
         }
     }
 

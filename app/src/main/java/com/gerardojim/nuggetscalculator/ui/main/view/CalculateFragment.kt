@@ -8,8 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.gerardojim.nuggetscalculator.R
 import com.gerardojim.nuggetscalculator.databinding.CalculateFragmentBinding
 import com.gerardojim.nuggetscalculator.ui.main.AndroidPreferences
@@ -55,37 +57,51 @@ class CalculateFragment : Fragment() {
         observeViewModel()
     }
 
-    private fun setupClicks(state: MainState) {
-
-         /*
+    private fun observeViewModel() {
+        fun setupUserInteraction(mainState: MainState) {
+            Log.d(null, "jimenez - setupClicks::State = $mainState")
+            /*
          TODO these interactions with the view result in a testable Intent but as is testing the
           an interaction with only one of these views is not possible.
           Considering other approaches
          */
-        lifecycleScope.launch {
-            binding.caloriesEditText.textChanges()
-                .filterNot { it.isEmpty() }.map { it.toString().toInt() }.also {
-                    state.onCaloricTargetInput.map { send -> it.collect(send) }
-                }
-            binding.foodDropdown.selectionChanges().also {
-                state.onSelectedFoodTypeChanged.map { send -> it.map { FoodType.fromPosition(it) }.collect(send) }
-            }
-            binding.greenieSwitch.checkedChanges().also {
-                state.onWithGreenieSwitched.map { send -> it.collect(send) }
-            }
-
-            binding.dryfoodSwitch.checkedChanges().collect { isChecked ->
-                Log.d(null, "jimenez - test - dryFoodSwitch = $isChecked")
-                state.onWithDryFoodSwitched.map { listener ->
-                    listener.invoke(isChecked)
+            lifecycleScope.launch {
+                lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    launch {
+                        binding.dryfoodSwitch.checkedChanges().collect { isChecked ->
+                            mainState.onWithDryFoodSwitched.map { it(isChecked) }
+                        }
+                    }
+                    launch {
+                        binding.caloriesEditText.textChanges()
+                            .filterNot { it.isEmpty() }.map { it.toString().toInt() }
+                            .collect { calorieTarget ->
+                                mainState.onCaloricTargetInput.map { it(calorieTarget) }
+                            }
+                    }
+                    launch {
+                        binding.foodDropdown.selectionChanges().collect { position ->
+                            mainState.onSelectedFoodTypeChanged.map {
+                                it(
+                                    FoodType.fromPosition(
+                                        position
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    launch {
+                        binding.greenieSwitch.checkedChanges().collect { isChecked ->
+                            mainState.onWithGreenieSwitched.map { it(isChecked) }
+                        }
+                    }
                 }
             }
         }
-    }
 
-    private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.state.collect {
+                Log.d(null, "jimenez - observeViewModel::State = $it")
                 when (it) {
                     is MainState.Error -> throw it.throwable
                     is MainState.Loading -> setupFoodPicker(it)
@@ -98,7 +114,7 @@ class CalculateFragment : Fragment() {
                     }
                 }.exhaustive
                 setupFoodPicker(it)
-                setupClicks(it)
+                setupUserInteraction(it)
             }
         }
     }
