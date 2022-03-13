@@ -6,11 +6,11 @@ import com.gerardojim.nuggetscalculator.ui.main.intent.CalculateIntent
 
 interface Preferences {
     fun getCaloricTarget(): Option<Int>
-    fun setCaloricTarget(caloricTarget: CalculateIntent.DailyCaloricTarget)
+    fun setCaloricTarget(caloricTarget: CalculateIntent.DailyCaloricTarget): Boolean
     fun getFoodType(): Option<FoodType>
-    fun setFoodType(foodType: FoodType)
+    fun setFoodType(foodType: FoodType): Boolean
     fun isWithGreenie(): Boolean
-    fun setWithGreenie(withGreenie: CalculateIntent.HasGreenie)
+    fun setWithGreenie(withGreenie: CalculateIntent.HasGreenie): Boolean
     fun isCombinedWithDryFood(): Boolean
-    fun setCombinedWithDryFood(withDryFood: CalculateIntent.HasDryFood)
+    fun setCombinedWithDryFood(withDryFood: CalculateIntent.HasDryFood): Boolean
 }

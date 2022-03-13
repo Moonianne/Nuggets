@@ -4,10 +4,9 @@ import android.view.View
 import android.widget.AdapterView
 
 class SimpleOnItemClickListener(
-    private val listener: (Int) -> Unit
+    private val listener: (Int) -> Unit,
 ) : AdapterView.OnItemClickListener {
 
-    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) =
         listener(position)
-    }
 }

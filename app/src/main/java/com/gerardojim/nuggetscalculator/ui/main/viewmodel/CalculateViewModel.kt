@@ -77,7 +77,7 @@ class CalculateViewModel(
             userIntent.consumeAsFlow().shareIn(viewModelScope, SharingStarted.Lazily)
         viewModelScope.launch {
             launch {
-                intentSharedSource.collect { intent: CalculateIntent ->
+                intentSharedSource.collect { intent ->
                     when (intent) {
                         is CalculateIntent.Calculate -> calculateMealServingSize(intent)
                         is CalculateIntent.DailyCaloricTarget -> appPrefs.setCaloricTarget(intent)

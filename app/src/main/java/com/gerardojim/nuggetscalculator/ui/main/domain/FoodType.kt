@@ -1,7 +1,7 @@
 package com.gerardojim.nuggetscalculator.ui.main.domain
 
 enum class FoodType(
-    val position: Int,
+    val     position: Int,
     val key: String,
     val kcalPerGram: Double,
 ) {

@@ -2,6 +2,7 @@ package com.gerardojim.nuggetscalculator.ui.main.view
 
 import android.content.Context
 import android.os.Bundle
+import android.text.Editable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +18,7 @@ import com.gerardojim.nuggetscalculator.databinding.CalculateFragmentBinding
 import com.gerardojim.nuggetscalculator.ui.main.AndroidPreferences
 import com.gerardojim.nuggetscalculator.ui.main.domain.FoodType
 import com.gerardojim.nuggetscalculator.ui.main.exhaustive
+import com.gerardojim.nuggetscalculator.ui.main.get
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.checkedChanges
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.selectionChanges
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.textChanges
@@ -58,7 +60,7 @@ class CalculateFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        suspend fun setupUserInteraction(mainState: MainState) {
+         fun setupUserInteraction(mainState: MainState) {
             /*
          TODO these interactions with the view result in a testable Intent but as is testing the
           an interaction with only one of these views is not possible.
@@ -101,6 +103,7 @@ class CalculateFragment : Fragment() {
         lifecycleScope.launch {
             viewModel.state.collect {
                 Log.d(null, "jimenez - observeViewModel::State = $it")
+
                 when (it) {
                     is MainState.Error -> throw it.throwable
                     is MainState.Loading -> setupFoodPicker(it)
@@ -110,10 +113,18 @@ class CalculateFragment : Fragment() {
                     is MainState.Success -> {
                         binding.wetFoodTotal.text = it.mealServing.wetFoodServing.toString()
                         binding.dryFoodTotal.text = it.mealServing.dryFoodServing.toString()
+                        binding.greenieSwitch.isChecked = it.withGreenie
+                        binding.dryfoodSwitch.isChecked = it.withDryFood
+                        binding.caloriesEditText.text =
+                            Editable.Factory.getInstance()
+                                .newEditable(
+                                    it.caloricTarget.map { value -> value.toString() }
+                                        .get()
+                                )
                     }
                 }.exhaustive
                 setupFoodPicker(it)
-                setupUserInteraction(it)
+                setupUserInteraction(it) // TODO this shouldn't happen every new State emission
             }
         }
     }
@@ -126,6 +137,10 @@ class CalculateFragment : Fragment() {
                 it.foodTypes.map { foodType -> foodType.key }
             )
             setAdapter(adapter)
+            it.selectedFood.map { foodType ->
+//                binding.foodDropdown.setSelection(foodType.position)
+            }
         }
+
     }
 }
