@@ -60,7 +60,7 @@ class CalculateFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-         fun setupUserInteraction(mainState: MainState) {
+        fun setupUserInteraction(mainState: MainState) {
             /*
          TODO these interactions with the view result in a testable Intent but as is testing the
           an interaction with only one of these views is not possible.
@@ -115,12 +115,6 @@ class CalculateFragment : Fragment() {
                         binding.dryFoodTotal.text = it.mealServing.dryFoodServing.toString()
                         binding.greenieSwitch.isChecked = it.withGreenie
                         binding.dryfoodSwitch.isChecked = it.withDryFood
-                        binding.caloriesEditText.text =
-                            Editable.Factory.getInstance()
-                                .newEditable(
-                                    it.caloricTarget.map { value -> value.toString() }
-                                        .get()
-                                )
                     }
                 }.exhaustive
                 setupFoodPicker(it)
@@ -141,6 +135,5 @@ class CalculateFragment : Fragment() {
 //                binding.foodDropdown.setSelection(foodType.position)
             }
         }
-
     }
 }
