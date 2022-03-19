@@ -3,7 +3,6 @@ package com.gerardojim.nuggetscalculator.ui.main.view
 import android.content.Context
 import android.os.Bundle
 import android.text.Editable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +17,6 @@ import com.gerardojim.nuggetscalculator.databinding.CalculateFragmentBinding
 import com.gerardojim.nuggetscalculator.ui.main.AndroidPreferences
 import com.gerardojim.nuggetscalculator.ui.main.domain.FoodType
 import com.gerardojim.nuggetscalculator.ui.main.exhaustive
-import com.gerardojim.nuggetscalculator.ui.main.get
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.checkedChanges
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.selectionChanges
 import com.gerardojim.nuggetscalculator.ui.main.viewUtil.textChanges
@@ -70,7 +68,6 @@ class CalculateFragment : Fragment() {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     launch {
                         binding.foodDropdown.selectionChanges().collect { position ->
-                            Log.d(null, "jimenez - test - foodDropdown:: $position")
                             mainState.onSelectedFoodTypeChanged.map {
                                 it(FoodType.fromPosition(position))
                             }
@@ -78,7 +75,6 @@ class CalculateFragment : Fragment() {
                     }
                     launch {
                         binding.dryfoodSwitch.checkedChanges().collect { isChecked ->
-                            Log.d(null, "jimenez - test - dryFoodSwitch:: $isChecked")
                             mainState.onWithDryFoodSwitched.map { it(isChecked) }
                         }
                     }
@@ -86,13 +82,11 @@ class CalculateFragment : Fragment() {
                         binding.caloriesEditText.textChanges()
                             .filterNot { it.isEmpty() }.map { it.toString().toInt() }
                             .collect { calorieTarget ->
-                                Log.d(null, "jimenez - test - caloriesEditText:: $calorieTarget")
                                 mainState.onCaloricTargetInput.map { it(calorieTarget) }
                             }
                     }
                     launch {
                         binding.greenieSwitch.checkedChanges().collect { isChecked ->
-                            Log.d(null, "jimenez - test - greenieSwitch:: $isChecked")
                             mainState.onWithGreenieSwitched.map { it(isChecked) }
                         }
                     }
@@ -100,25 +94,39 @@ class CalculateFragment : Fragment() {
             }
         }
 
+        fun populateViews(it: MainState) {
+            it.caloricTarget.map { calories ->
+                binding.caloriesEditText.run {
+                    if (!hasFocus()) {
+                        text = Editable.Factory.getInstance().newEditable(calories.toString())
+                    }
+                }
+            }
+            binding.greenieSwitch.isChecked = it.withGreenie
+            binding.dryfoodSwitch.isChecked = it.withDryFood
+            it.selectedFood.map { foodType ->
+                binding.foodDropdown.run {
+                    setText(adapter.getItem(foodType.position).toString(), false)
+                }
+            }
+        }
+
         lifecycleScope.launch {
             viewModel.state.collect {
-                Log.d(null, "jimenez - observeViewModel::State = $it")
-
+                setupFoodPicker(it)
                 when (it) {
                     is MainState.Error -> throw it.throwable
                     is MainState.Loading -> setupFoodPicker(it)
                     is MainState.NeedInput -> {
-                        // TEMP
+                        populateViews(it)
                     }
                     is MainState.Success -> {
                         binding.wetFoodTotal.text = it.mealServing.wetFoodServing.toString()
                         binding.dryFoodTotal.text = it.mealServing.dryFoodServing.toString()
-                        binding.greenieSwitch.isChecked = it.withGreenie
-                        binding.dryfoodSwitch.isChecked = it.withDryFood
+                        populateViews(it)
                     }
                 }.exhaustive
-                setupFoodPicker(it)
-                setupUserInteraction(it) // TODO this shouldn't happen every new State emission
+                setupUserInteraction(it)
             }
         }
     }
@@ -131,9 +139,6 @@ class CalculateFragment : Fragment() {
                 it.foodTypes.map { foodType -> foodType.key }
             )
             setAdapter(adapter)
-            it.selectedFood.map { foodType ->
-//                binding.foodDropdown.setSelection(foodType.position)
-            }
         }
     }
 }

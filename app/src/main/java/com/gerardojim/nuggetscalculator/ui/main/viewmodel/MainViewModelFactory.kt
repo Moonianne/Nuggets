@@ -5,7 +5,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.gerardojim.nuggetscalculator.ui.main.AndroidPreferences
 import com.gerardojim.nuggetscalculator.ui.main.domain.GetCalculatorViewStateUseCase
 
-class MainViewModelFactory(private val androidPreferences: AndroidPreferences) : ViewModelProvider.Factory {
+class MainViewModelFactory(private val androidPreferences: AndroidPreferences) :
+    ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CalculateViewModel::class.java)) {
             return CalculateViewModel(
